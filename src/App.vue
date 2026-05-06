@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue'
 import { ref } from 'vue'
+import { supabase } from './lib/supabase'
 
 const isSubmitting = ref(false)
 
@@ -65,7 +66,7 @@ function validateForm() {
   return isValid
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (isSubmitting.value) {
     return
   }
@@ -74,11 +75,26 @@ function handleSubmit() {
     return
   }
   isSubmitting.value = true
-  setTimeout(() => {
-    alert('Formulario enviado con éxito!')
-    isSubmitting.value = false
-  }, 1500)
-  
+
+  const { error } = await supabase
+  .from('requests')
+  .insert([
+    {
+      title: formData.title,
+      description: formData.description,
+      category: formData.category,
+      priority: Number(formData.priority),
+      email: formData.email
+    }
+  ])
+  isSubmitting.value = false
+
+  if (error) {
+    alert('Error al guardar la solicitud')
+    console.error(error)
+    return
+  } 
+  alert('Solicitud enviada con correctamente')
 }
 
 </script>
