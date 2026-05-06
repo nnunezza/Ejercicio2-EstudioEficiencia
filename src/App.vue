@@ -1,5 +1,8 @@
 <script setup>
 import { reactive } from 'vue'
+import { ref } from 'vue'
+
+const isSubmitting = ref(false)
 
 const formData = reactive({
   title: '',
@@ -63,11 +66,19 @@ function validateForm() {
 }
 
 function handleSubmit() {
+  if (isSubmitting.value) {
+    return
+  }
   const isValid = validateForm()
   if (!isValid) {
     return
   }
-  alert('Formulario enviado con éxito!')
+  isSubmitting.value = true
+  setTimeout(() => {
+    alert('Formulario enviado con éxito!')
+    isSubmitting.value = false
+  }, 1500)
+  
 }
 
 </script>
@@ -113,7 +124,9 @@ function handleSubmit() {
         <p v-if="errors.email" style="color: red">{{ errors.email }}</p>
       </div>
 
-      <button type="submit">Enviar</button>
+      <button type="submit" :disabled="isSubmitting">
+        {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
+      </button>
     </form>
     <pre>{{ formData }}</pre>
   </div>
