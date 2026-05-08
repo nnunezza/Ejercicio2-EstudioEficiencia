@@ -1,38 +1,37 @@
-# .
+# Ejercicio 2 - Formulario con Supabase
 
-This template should help get you started developing with Vue 3 in Vite.
+## Setup
 
-## Recommended IDE Setup
+1. Clonar el repositorio
+2. Instalar dependencias:
+   npm install
+3. Ejecutar el proyecto:
+   npm run dev
+4. Abrir en el navegador:
+   http://localhost:5173
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+No es necesario configurar variables de entorno porque se utiliza la anon public key de Supabase directamente en el código.
 
-## Recommended Browser Setup
+---
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+## Decisiones técnicas
 
-## Customize configuration
+- Se ha usado **Vue 3 con Composition API** por su simplicidad y claridad.
+- La validación del formulario se hace manualmente en una función (`validateForm`).
+- Se ha utilizado **Supabase** como base de datos cloud para guardar y leer los datos.
+- El campo **email** se utiliza para identificar al usuario y mostrar solo sus registros (sin sistema de login).
+- La tabla incluye un campo `created_at` para poder ordenar las solicitudes por fecha.
+- Se gestionan estados como:
+  - envío (`isSubmitting`)
+  - error (`submitError`)
+  - éxito (`submitSuccess`)
+- El listado se actualiza automáticamente después de cada inserción.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+---
 
-## Project Setup
+## Limitaciones
 
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
+- No hay sistema de autenticación real.
+- El usuario se identifica solo por el email introducido.
+- No se ha implementado edición ni borrado de solicitudes.
+- No hay validación en backend (solo en frontend).
