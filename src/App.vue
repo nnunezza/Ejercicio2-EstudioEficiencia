@@ -2,8 +2,13 @@
 import { reactive } from 'vue'
 import { ref } from 'vue'
 import { supabase } from './lib/supabase'
+import { onMounted } from 'vue'
 
 const isSubmitting = ref(false)
+const submitSuccess = ref('')
+const submitError = ref('')
+const requests = ref([])
+const loadingRequests = ref(false)
 
 const formData = reactive({
   title: '',
@@ -66,6 +71,27 @@ function validateForm() {
   return isValid
 }
 
+async function loadRequests() {
+  if (!formData.email) return
+
+  loadingRequests.value = true
+
+  const { data, error } = await supabase
+    .from('requests')
+    .select('*')
+    .eq('email', formData.email)
+    .order('created_at', { ascending: false })
+
+  loadingRequests.value = false
+
+  if (error) {
+    console.error(error)
+    return
+  }
+
+  requests.value = data
+}
+
 async function handleSubmit() {
   if (isSubmitting.value) {
     return
@@ -75,6 +101,8 @@ async function handleSubmit() {
     return
   }
   isSubmitting.value = true
+  submitSuccess.value = ''
+  submitError.value = ''
 
   const { error } = await supabase
   .from('requests')
@@ -90,17 +118,31 @@ async function handleSubmit() {
   isSubmitting.value = false
 
   if (error) {
-    alert('Error al guardar la solicitud')
+    if (error.message.includes('Failed to fetch')) {
+      submitError.value = 'Error de conexión. Por favor, revisa tu red e inténtalo de nuevo.'
+    } else {
+      submitError.value = 'No se pudo guardar la solicitud. Por favor, inténtalo de nuevo.'
+    }
     console.error(error)
     return
   } 
-  alert('Solicitud enviada con correctamente')
+  submitSuccess.value = 'Solicitud enviada con éxito.'
+
+  const currentEmail = formData.email
+
+  formData.title = ''
+  formData.description = ''
+  formData.category = ''
+  formData.priority = ''
+  formData.email = currentEmail
+
+  await loadRequests()
 }
 
 </script>
 
 <template>
-  <div>
+  <div class="container">
     <h1>Formulario de solicitud</h1>
     <form @submit.prevent="handleSubmit">
       <div>
@@ -143,9 +185,134 @@ async function handleSubmit() {
       <button type="submit" :disabled="isSubmitting">
         {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
       </button>
+      <p v-if="submitError" style="color: red">{{ submitError }}</p>
+      <p v-if="submitSuccess" style="color: green">{{ submitSuccess }}</p>
     </form>
-    <pre>{{ formData }}</pre>
+    
+    <h2>Mis solicitudes</h2>
+
+    <p v-if="loadingRequests">Cargando...</p>
+
+    <ul v-if="requests.length">
+      <li v-for="req in requests" :key="req.id">
+        <strong>{{ req.title }}</strong> - 
+        {{ req.category }} - 
+        Prioridad: {{ req.priority }}
+        <br />
+        <small>{{ new Date(req.created_at).toLocaleString() }}</small>
+        <small class="request-description">{{ req.description }}</small>
+      </li>
+    </ul>
+
+    <p v-else>No hay solicitudes aún</p>
+
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h1, h2 {
+  text-align: center;
+}
+
+form {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+form div {
+  margin-bottom: 15px;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 5px;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+p {
+  margin: 5px 0 0;
+}
+
+p[style*="color: green"] {
+  background: #e6f9ec;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+p[style*="color: red"] {
+  background: #fdecea;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+li {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+}
+
+small {
+  color: #666;
+}
+
+.request-description {
+  display: block;
+  margin-top: 5px;
+  color: #555;
+  font-style: italic;
+}
+
+</style>
